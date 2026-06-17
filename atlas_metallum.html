@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATLAS METALLUM — Maqueta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Oswald:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08080a;
+    --bg-warm:#160d0d;
+    --panel:rgba(18,16,20,0.62);
+    --panel-solid:#100e12;
+    --line:rgba(201,162,39,0.16);
+    --line-strong:rgba(201,162,39,0.34);
+    --bone:#d8d4cc;
+    --bone-dim:#8a857c;
+    --gold:#c9a227;
+    --gold-bright:#e6c043;
+    --fire:#d8521f;
+    --fire-hot:#e89020;
+    --silver:#8a9099;
+    --blood:#9a1f1a;
+    --font-disp:'Cinzel',serif;
+    --font-ui:'Oswald',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;width:100%;overflow:hidden;background:var(--bg)}
+  body{
+    font-family:var(--font-ui);
+    color:var(--bone);
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 52%, var(--bg-warm) 0%, rgba(8,8,10,0) 60%),
+      var(--bg);
+  }
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+  /* ---------- TOPBAR ---------- */
+  .am-top{
+    position:relative;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 26px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(12,11,14,0.85), rgba(12,11,14,0.0));
+  }
+  .am-brand{display:flex;flex-direction:column;gap:2px}
+  .am-eyebrow{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.42em;
+    color:var(--gold);text-transform:uppercase;opacity:.85;
+  }
+  .am-wordmark{
+    font-family:var(--font-disp);font-weight:900;font-size:25px;
+    letter-spacing:.18em;color:var(--bone);line-height:1;
+    text-transform:uppercase;
+  }
+  .am-wordmark b{color:var(--gold-bright);font-weight:900}
+  .am-kpis{display:flex;gap:30px;align-items:flex-end}
+  .am-kpi{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .am-kpi .v{font-family:var(--font-mono);font-size:21px;color:var(--bone);font-weight:500}
+  .am-kpi .v.hot{color:var(--fire-hot)}
+  .am-kpi .l{font-family:var(--font-ui);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--bone-dim);margin-top:5px}
+
+  /* ---------- MAIN GRID ---------- */
+  .am-stage{
+    position:absolute;inset:0;top:64px;
+    display:grid;
+    grid-template-columns:248px 1fr 312px;
+    gap:0;
+  }
+  .am-col{position:relative;min-height:0;display:flex;flex-direction:column}
+  .am-col.left{border-right:1px solid var(--line)}
+  .am-col.right{border-left:1px solid var(--line)}
+
+  .am-panelhead{
+    padding:16px 18px 10px;
+  }
+  .am-panelhead h2{
+    font-family:var(--font-disp);font-weight:700;font-size:15px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--bone);
+  }
+  .am-panelhead p{
+    font-family:var(--font-ui);font-weight:300;font-size:11.5px;
+    letter-spacing:.04em;color:var(--bone-dim);margin-top:4px;
+  }
+
+  /* ---------- GENRE FILTER LIST ---------- */
+  .am-genres{overflow-y:auto;padding:4px 12px 18px;flex:1}
+  .am-genres::-webkit-scrollbar{width:6px}
+  .am-genres::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:0}
+  .am-allbtn{
+    width:100%;text-align:left;cursor:pointer;
+    background:transparent;border:1px solid var(--line-strong);
+    color:var(--gold-bright);font-family:var(--font-ui);font-weight:500;
+    font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    padding:9px 12px;margin:0 0 10px;transition:all .18s;
+  }
+  .am-allbtn:hover{background:rgba(201,162,39,0.08);border-color:var(--gold)}
+  .am-allbtn.muted{color:var(--bone-dim);border-color:var(--line)}
+  .am-grow{
+    display:flex;align-items:center;gap:10px;cursor:pointer;
+    padding:8px 10px;border:1px solid transparent;
+    transition:background .15s,border-color .15s;position:relative;
+  }
+  .am-grow:hover{background:rgba(216,82,31,0.07)}
+  .am-grow.active{background:rgba(232,144,32,0.12);border-color:var(--fire-hot)}
+  .am-grow .gname{
+    flex:1;font-family:var(--font-ui);font-weight:400;font-size:13.5px;
+    letter-spacing:.06em;color:var(--bone);text-transform:capitalize;
+  }
+  .am-grow.active .gname{color:var(--fire-hot);font-weight:500}
+  .am-grow .gcount{font-family:var(--font-mono);font-size:11px;color:var(--bone-dim)}
+  .am-grow .gbar{
+    position:absolute;left:0;bottom:0;height:2px;background:var(--fire);
+    opacity:.5;transition:width .3s;
+  }
+  .am-grow.active .gbar{background:var(--fire-hot);opacity:1;height:3px}
+
+  /* ---------- GLOBE ---------- */
+  .am-globe-wrap{position:relative;flex:1;min-height:0}
+  #am-canvas{display:block;width:100%;height:100%}
+  .am-controls{position:absolute;left:20px;top:16px;z-index:6;display:flex;gap:8px}
+  .am-ctrl{
+    display:flex;align-items:center;gap:8px;cursor:pointer;
+    background:rgba(12,11,14,0.82);border:1px solid var(--line-strong);
+    color:var(--bone);font-family:var(--font-ui);font-weight:500;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;padding:9px 14px;transition:all .16s;
+  }
+  .am-ctrl:hover{border-color:var(--gold);color:var(--gold-bright)}
+  .am-ctrl .ic{font-size:9px;color:var(--fire-hot);letter-spacing:0;line-height:1}
+  .am-ctrl.paused .ic{color:var(--gold-bright)}
+  .am-flag{display:inline-block;vertical-align:middle;border:1px solid rgba(0,0,0,0.5)}
+  .am-overlay{
+    position:absolute;left:20px;bottom:18px;z-index:5;pointer-events:none;
+    max-width:340px;
+  }
+  .am-status{
+    font-family:var(--font-disp);font-weight:700;font-size:14px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--bone);
+    margin-bottom:7px;
+  }
+  .am-status b{color:var(--fire-hot)}
+  .am-hint{
+    font-family:var(--font-mono);font-size:10.5px;color:var(--bone-dim);
+    letter-spacing:.03em;line-height:1.6;
+  }
+  .am-legend{
+    position:absolute;right:18px;top:16px;z-index:5;pointer-events:none;
+    text-align:right;
+  }
+  .am-legend .lt{font-family:var(--font-ui);font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--bone-dim);margin-bottom:8px}
+  .am-ramp{
+    width:150px;height:7px;margin-left:auto;
+    background:linear-gradient(90deg,var(--silver),var(--fire-hot),var(--fire));
+  }
+  .am-ramp-labels{display:flex;justify-content:space-between;width:150px;margin-left:auto;
+    margin-top:5px;font-family:var(--font-mono);font-size:9px;color:var(--bone-dim)}
+
+  /* ---------- RIGHT PANEL: TREEMAP / DETAIL ---------- */
+  .am-right-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  #am-tree{flex:1;min-height:0;width:100%}
+  .am-tree-note{
+    padding:10px 18px 16px;font-family:var(--font-mono);font-size:10px;
+    color:var(--bone-dim);letter-spacing:.02em;border-top:1px solid var(--line);
+  }
+
+  /* country detail */
+  .am-detail{display:none;flex-direction:column;height:100%;overflow-y:auto}
+  .am-detail.show{display:flex}
+  .am-detail::-webkit-scrollbar{width:6px}
+  .am-detail::-webkit-scrollbar-thumb{background:var(--line-strong)}
+  .am-back{
+    display:flex;align-items:center;gap:7px;cursor:pointer;
+    font-family:var(--font-ui);font-weight:400;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--gold);background:transparent;border:none;
+    padding:14px 18px 6px;
+  }
+  .am-back:hover{color:var(--gold-bright)}
+  .am-dhead{padding:2px 18px 14px;border-bottom:1px solid var(--line)}
+  .am-dflag{font-family:var(--font-mono);font-size:11px;color:var(--fire-hot);
+    letter-spacing:.2em;margin-bottom:4px}
+  .am-dname{font-family:var(--font-disp);font-weight:900;font-size:26px;
+    letter-spacing:.06em;color:var(--bone);text-transform:uppercase;line-height:1}
+  .am-dtotal{font-family:var(--font-mono);font-size:12px;color:var(--bone-dim);margin-top:8px}
+  .am-dtotal b{color:var(--bone);font-weight:500}
+  .am-dsec{padding:14px 18px;border-bottom:1px solid var(--line)}
+  .am-dsec h3{font-family:var(--font-ui);font-weight:500;font-size:10.5px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:11px}
+  .am-drow{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .am-drow .n{flex:1;font-family:var(--font-ui);font-size:13px;color:var(--bone);text-transform:capitalize}
+  .am-drow .c{font-family:var(--font-mono);font-size:11px;color:var(--bone-dim);min-width:38px;text-align:right}
+  .am-drow .b{height:6px;background:var(--fire);max-width:96px;flex-shrink:0}
+  .am-bands{display:flex;flex-wrap:wrap;gap:7px}
+  .am-band{
+    font-family:var(--font-ui);font-weight:400;font-size:12px;letter-spacing:.03em;
+    color:var(--bone);border:1px solid var(--line-strong);padding:5px 10px;
+    background:rgba(201,162,39,0.04);
+  }
+  .am-cities{font-family:var(--font-ui);font-size:13px;color:var(--bone-dim);line-height:1.8}
+  .am-cities b{color:var(--bone);font-weight:400}
+
+  .am-mockchip{
+    position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;
+    color:var(--bone-dim);background:rgba(12,11,14,0.78);
+    border:1px solid var(--line);padding:7px 16px;text-transform:uppercase;
+    pointer-events:none;
+  }
+  .am-mockchip b{color:var(--gold)}
+
+  /* tooltip */
+  #am-tip{
+    position:fixed;z-index:60;pointer-events:none;display:none;
+    background:var(--panel-solid);border:1px solid var(--line-strong);
+    padding:9px 13px;min-width:120px;
+  }
+  #am-tip .tn{font-family:var(--font-disp);font-weight:700;font-size:13px;
+    letter-spacing:.08em;color:var(--bone);text-transform:uppercase}
+  #am-tip .tv{font-family:var(--font-mono);font-size:11px;color:var(--fire-hot);margin-top:3px}
+
+  @media (max-width:880px){
+    .am-stage{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;top:60px}
+    .am-col.left{border-right:none;border-bottom:1px solid var(--line)}
+    .am-col.right{border-left:none;border-top:1px solid var(--line)}
+    .am-genres{max-height:180px}
+    .am-kpis{gap:16px}
+    .am-wordmark{font-size:19px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<h2 class="sr-only">Atlas Metallum: globo interactivo en 3D de bandas de metal por país, con filtro por género y árbol de géneros. Maqueta con datos de muestra.</h2>
+
+<header class="am-top">
+  <div class="am-brand">
+    <span class="am-eyebrow">Encyclopaedia · Data Atlas</span>
+    <span class="am-wordmark">Atlas <b>Metallum</b></span>
+  </div>
+  <div class="am-kpis">
+    <div class="am-kpi"><span class="v" id="kpi-bands">—</span><span class="l">Bandas</span></div>
+    <div class="am-kpi"><span class="v" id="kpi-countries">—</span><span class="l">Países</span></div>
+    <div class="am-kpi"><span class="v hot" id="kpi-focus">Todos</span><span class="l" id="kpi-focus-l">En foco</span></div>
+  </div>
+</header>
+
+<div class="am-stage">
+
+  <!-- LEFT: genre filter -->
+  <section class="am-col left">
+    <div class="am-panelhead">
+      <h2>Géneros</h2>
+      <p>Filtra el mundo por sonido. El globo responde.</p>
+    </div>
+    <div class="am-genres" id="am-genres">
+      <button class="am-allbtn muted" id="am-all">◆ Todos los géneros</button>
+      <!-- genre rows injected -->
+    </div>
+  </section>
+
+  <!-- CENTER: globe -->
+  <section class="am-col center">
+    <div class="am-globe-wrap">
+      <canvas id="am-canvas"></canvas>
+      <div class="am-controls">
+        <button class="am-ctrl" id="am-pause"><span class="ic" id="am-pause-ic">❚❚</span><span id="am-pause-tx">Pausar giro</span></button>
+      </div>
+      <div class="am-legend">
+        <div class="lt">Densidad</div>
+        <div class="am-ramp"></div>
+        <div class="am-ramp-labels"><span>pocas</span><span>muchas</span></div>
+      </div>
+      <div class="am-overlay">
+        <div class="am-status" id="am-status">Mostrando <b>todos</b> los géneros</div>
+        <div class="am-hint">Arrastra para girar · rueda para acercar · botón ↖ para frenar<br>clic en una púa para abrir el país</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: treemap (default) + country detail -->
+  <section class="am-col right">
+    <div class="am-panelhead" id="am-rhead">
+      <h2>El mundo por género</h2>
+      <p>Tamaño = nº de bandas. Clic para filtrar.</p>
+    </div>
+    <div class="am-right-body">
+      <div id="am-tree-view" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div id="am-tree"></div>
+        <div class="am-tree-note">Cada bloque es un género. Clic = mismo filtro que la lista izquierda.</div>
+      </div>
+      <div class="am-detail" id="am-detail">
+        <button class="am-back" id="am-back">← Volver al mundo</button>
+        <div class="am-dhead">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <span id="d-bigflag" style="flex-shrink:0"></span>
+            <div style="min-width:0">
+              <div class="am-dflag" id="d-flag"></div>
+              <div class="am-dname" id="d-name"></div>
+            </div>
+          </div>
+          <div class="am-dtotal" id="d-total"></div>
+        </div>
+        <div class="am-dsec">
+          <h3>Géneros dominantes</h3>
+          <div id="d-genres"></div>
+        </div>
+        <div class="am-dsec">
+          <h3>Bandas emblemáticas</h3>
+          <div class="am-bands" id="d-bands"></div>
+        </div>
+        <div class="am-dsec" style="border-bottom:none">
+          <h3>Focos de la escena</h3>
+          <div class="am-cities" id="d-cities"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="am-tip"><div class="tn"></div><div class="tv"></div></div>
+<div class="am-mockchip">Maqueta · datos de <b>muestra</b> · listo para enchufar la fuente real</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script>
+/* =====================================================================
+   ATLAS METALLUM — maqueta
+   Datos de MUESTRA (mock). Cuando llegue la data real del scraper,
+   solo hay que reemplazar PAISES con el mismo "contrato":
+   { code, name, lat, lng, g:{genero:nº}, ciudades:[], bandas:[] }
+   ===================================================================== */
+
+const GENEROS = ["Black","Death","Thrash","Heavy","Power","Doom",
+                 "Progressive","Folk","Speed","Symphonic","Grindcore","Gothic"];
+
+const PAISES = [
+  {code:"US",name:"Estados Unidos",lat:39.8,lng:-98.5,
+   g:{Death:6800,Thrash:5200,Heavy:5600,Power:3100,Doom:2400,Black:2600,Progressive:2200,Grindcore:1500,Speed:900,Gothic:700},
+   ciudades:["Tampa (FL)","Los Ángeles","Nueva York"],bandas:["Metallica","Slayer","Death","Morbid Angel","Pantera","Megadeth"]},
+  {code:"DE",name:"Alemania",lat:51.2,lng:10.4,
+   g:{Thrash:2600,Power:2400,Heavy:2200,Death:1700,Black:1200,Speed:900,Doom:600,Progressive:700,Symphonic:400},
+   ciudades:["Essen","Hamburgo","Berlín"],bandas:["Kreator","Sodom","Blind Guardian","Helloween","Destruction"]},
+  {code:"GB",name:"Reino Unido",lat:54.0,lng:-2.0,
+   g:{Heavy:2400,Doom:1100,Death:1300,Black:900,Grindcore:700,Power:600,Gothic:500,Thrash:700,Progressive:500},
+   ciudades:["Birmingham","Londres","Liverpool"],bandas:["Iron Maiden","Black Sabbath","Judas Priest","Napalm Death","Cradle of Filth"]},
+  {code:"SE",name:"Suecia",lat:60.1,lng:15.0,
+   g:{Death:2900,Black:1400,Heavy:900,Doom:700,Thrash:600,Progressive:600,Folk:300,Power:500},
+   ciudades:["Estocolmo","Gotemburgo"],bandas:["Entombed","At the Gates","Opeth","Dismember","Bathory"]},
+  {code:"FI",name:"Finlandia",lat:62.0,lng:25.7,
+   g:{Death:1500,Black:1200,Doom:800,Folk:500,Power:700,Symphonic:500,Heavy:600,Gothic:400},
+   ciudades:["Helsinki","Tampere"],bandas:["Children of Bodom","Nightwish","Amorphis","Insomnium","Sentenced"]},
+  {code:"IT",name:"Italia",lat:42.8,lng:12.6,
+   g:{Power:1100,Heavy:900,Black:800,Death:900,Symphonic:600,Doom:500,Progressive:600,Gothic:500,Folk:300},
+   ciudades:["Milán","Roma"],bandas:["Lacuna Coil","Rhapsody of Fire","Fleshgod Apocalypse"]},
+  {code:"BR",name:"Brasil",lat:-12.0,lng:-51.9,
+   g:{Death:1700,Thrash:1300,Black:1000,Heavy:900,Power:700,Grindcore:500,Doom:300},
+   ciudades:["Belo Horizonte","São Paulo"],bandas:["Sepultura","Krisiun","Angra","Sarcófago"]},
+  {code:"FR",name:"Francia",lat:46.6,lng:2.4,
+   g:{Black:1600,Death:1100,Heavy:700,Doom:500,Thrash:600,Progressive:500,Grindcore:400,Folk:300},
+   ciudades:["París","Burdeos"],bandas:["Gojira","Alcest","Deathspell Omega"]},
+  {code:"PL",name:"Polonia",lat:52.0,lng:19.1,
+   g:{Death:1500,Black:1300,Thrash:600,Heavy:400,Doom:300,Grindcore:300,Progressive:200},
+   ciudades:["Gdansk","Cracovia"],bandas:["Behemoth","Vader","Decapitated","Batushka"]},
+  {code:"CA",name:"Canadá",lat:56.1,lng:-100.0,
+   g:{Death:1200,Thrash:800,Black:700,Progressive:500,Heavy:600,Doom:300,Grindcore:300,Power:300},
+   ciudades:["Montreal","Quebec"],bandas:["Voivod","Cryptopsy","Devin Townsend","Kataklysm"]},
+  {code:"NO",name:"Noruega",lat:61.0,lng:9.0,
+   g:{Black:1700,Death:400,Doom:300,Folk:300,Heavy:300,Progressive:200,Symphonic:200},
+   ciudades:["Bergen","Oslo","Trondheim"],bandas:["Mayhem","Emperor","Darkthrone","Burzum","Immortal"]},
+  {code:"NL",name:"Países Bajos",lat:52.1,lng:5.3,
+   g:{Death:1000,Black:600,Doom:400,Symphonic:500,Gothic:400,Thrash:300,Progressive:300},
+   ciudades:["Ámsterdam","Eindhoven"],bandas:["Pestilence","Asphyx","Within Temptation","Textures"]},
+  {code:"GR",name:"Grecia",lat:39.1,lng:22.0,
+   g:{Black:900,Death:600,Heavy:400,Doom:300,Symphonic:400,Power:200},
+   ciudades:["Atenas","Salónica"],bandas:["Rotting Christ","Septicflesh"]},
+  {code:"ES",name:"España",lat:40.2,lng:-3.7,
+   g:{Death:800,Thrash:700,Heavy:600,Power:500,Black:500,Doom:300,Folk:200},
+   ciudades:["Madrid","Barcelona"],bandas:["Angelus Apatrida","Avulsed","Hamlet"]},
+  {code:"JP",name:"Japón",lat:36.2,lng:138.3,
+   g:{Heavy:700,Black:500,Death:500,Doom:400,Thrash:400,Grindcore:300,Power:300,Speed:200},
+   ciudades:["Tokio","Osaka"],bandas:["Sigh","Loudness","Church of Misery"]},
+  {code:"AU",name:"Australia",lat:-25.3,lng:134.0,
+   g:{Death:700,Black:500,Thrash:400,Doom:300,Grindcore:300,Heavy:300},
+   ciudades:["Sídney","Melbourne"],bandas:["Parkway Drive","Portal","Psycroptic"]},
+  {code:"CL",name:"Chile",lat:-35.7,lng:-71.5,
+   g:{Death:600,Thrash:500,Black:400,Heavy:300,Doom:200},
+   ciudades:["Santiago"],bandas:["Pentagram","Criminal"]},
+  {code:"MX",name:"México",lat:23.6,lng:-102.5,
+   g:{Death:600,Thrash:500,Black:300,Heavy:400,Grindcore:200,Power:200},
+   ciudades:["Ciudad de México","Monterrey"],bandas:["Brujería","Transmetal","The Chasm"]},
+  {code:"AR",name:"Argentina",lat:-35.4,lng:-64.0,
+   g:{Heavy:600,Thrash:400,Death:400,Power:300,Black:200},
+   ciudades:["Buenos Aires"],bandas:["Hermética","Rata Blanca","Malón"]},
+  {code:"CO",name:"Colombia",lat:4.6,lng:-74.3,
+   g:{Death:400,Black:300,Thrash:300,Grindcore:200,Heavy:200},
+   ciudades:["Medellín","Bogotá"],bandas:["Masacre","Kraken"]},
+  {code:"PE",name:"Perú",lat:-9.2,lng:-75.0,
+   g:{Death:350,Black:300,Thrash:200,Doom:120,Heavy:150},
+   ciudades:["Lima","Arequipa"],bandas:["Mortem","Hadez","Anal Vomit"]},
+  {code:"CZ",name:"Chequia",lat:49.8,lng:15.5,
+   g:{Death:500,Black:400,Grindcore:300,Thrash:300,Doom:200},
+   ciudades:["Praga","Brno"],bandas:["Master's Hammer","!T.O.O.H.!"]},
+  {code:"RU",name:"Rusia",lat:58.0,lng:60.0,
+   g:{Black:900,Death:700,Folk:400,Doom:300,Heavy:400,Power:300},
+   ciudades:["Moscú","San Petersburgo"],bandas:["Arkona","Aria"]},
+  {code:"DK",name:"Dinamarca",lat:56.0,lng:10.0,
+   g:{Heavy:500,Death:300,Black:300,Thrash:200,Doom:200},
+   ciudades:["Copenhague"],bandas:["Mercyful Fate","King Diamond","Volbeat"]},
+  {code:"CH",name:"Suiza",lat:46.8,lng:8.2,
+   g:{Black:400,Death:300,Folk:200,Thrash:200,Doom:200,Heavy:200},
+   ciudades:["Zúrich","Ginebra"],bandas:["Celtic Frost","Hellhammer","Eluveitie"]},
+  {code:"AT",name:"Austria",lat:47.5,lng:14.6,
+   g:{Black:600,Death:300,Doom:200,Heavy:200},
+   ciudades:["Viena","Salzburgo"],bandas:["Belphegor","Summoning"]},
+  {code:"PT",name:"Portugal",lat:39.5,lng:-8.2,
+   g:{Black:400,Death:300,Doom:200,Gothic:200,Heavy:200},
+   ciudades:["Lisboa","Oporto"],bandas:["Moonspell","Bizarra Locomotiva"]},
+  {code:"BE",name:"Bélgica",lat:50.6,lng:4.6,
+   g:{Death:400,Black:300,Doom:300,Thrash:200,Grindcore:200},
+   ciudades:["Amberes","Bruselas"],bandas:["Aborted","Enthroned"]},
+  {code:"IN",name:"India",lat:21.0,lng:79.0,
+   g:{Death:400,Heavy:300,Black:200,Thrash:200,Grindcore:100},
+   ciudades:["Bombay","Bangalore"],bandas:["Demonic Resurrection","Kryptos"]},
+  {code:"ID",name:"Indonesia",lat:-2.0,lng:118.0,
+   g:{Death:600,Grindcore:400,Black:300,Thrash:200},
+   ciudades:["Yakarta","Bandung"],bandas:["Jasad","Siksakubur"]},
+  {code:"TR",name:"Turquía",lat:39.0,lng:35.2,
+   g:{Heavy:300,Death:300,Black:200,Thrash:200,Doom:100},
+   ciudades:["Estambul","Ankara"],bandas:["Pentagram (TR)","Mezarkabul"]},
+  {code:"MY",name:"Malasia",lat:4.2,lng:101.9,
+   g:{Black:300,Death:300,Grindcore:200,Thrash:100},
+   ciudades:["Kuala Lumpur"],bandas:["Sil Khannaz","As-Sahar"]}
+];
+
+const total = p => Object.values(p.g).reduce((a,b)=>a+b,0);
+
+/* Géneros globales (suma sobre países) → para treemap y lista */
+const generoTotales = {};
+GENEROS.forEach(g=>generoTotales[g]=0);
+PAISES.forEach(p=>{for(const k in p.g){generoTotales[k]=(generoTotales[k]||0)+p.g[k];}});
+
+const GRAN_TOTAL = PAISES.reduce((a,p)=>a+total(p),0);
+
+/* estado */
+const state = { genero:null, pais:null, rotando:true };
+
+/* banderas: flagcdn SVG (se ve bien en Windows y en hosting);
+   si falla (CSP del preview), cae a emoji */
+function flagEmoji(code){
+  if(!code||code.length!==2)return '🏳';
+  const A=0x1F1E6;
+  return String.fromCodePoint(A+code.charCodeAt(0)-65, A+code.charCodeAt(1)-65);
+}
+function flagImg(code,h){
+  const iso=(code||'').toLowerCase();
+  const em=flagEmoji(code);
+  return `<img class="am-flag" src="https://flagcdn.com/${iso}.svg" alt="${code}" `+
+         `style="height:${h}px;width:auto" `+
+         `onerror="this.replaceWith(document.createTextNode('${em}'))">`;
+}
+
+/* helpers de color (frío plata -> ámbar -> rojo) */
+function colorFor(t){
+  t=Math.max(0,Math.min(1,t));
+  const stops=[[0.0,[138,144,153]],[0.55,[232,144,32]],[1.0,[200,52,25]]];
+  let a=stops[0],b=stops[stops.length-1];
+  for(let i=0;i<stops.length-1;i++){if(t>=stops[i][0]&&t<=stops[i+1][0]){a=stops[i];b=stops[i+1];break;}}
+  const f=(t-a[0])/((b[0]-a[0])||1);
+  const r=a[1][0]+(b[1][0]-a[1][0])*f;
+  const g=a[1][1]+(b[1][1]-a[1][1])*f;
+  const bl=a[1][2]+(b[1][2]-a[1][2])*f;
+  return new THREE.Color(r/255,g/255,bl/255);
+}
+const reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const fmt = n => n.toLocaleString('es-PE');
+
+/* =====================================================================
+   GLOBO 3D (three.js r128, OrbitControls no disponible -> órbita manual)
+   ===================================================================== */
+const canvas = document.getElementById('am-canvas');
+const wrap = canvas.parentElement;
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42,1,0.1,5000);
+const R = 100;
+let camDist = R*3.0;
+
+const globe = new THREE.Group();
+scene.add(globe);
+
+/* esfera sólida (oclusión) + wireframe (grilla "atlas") */
+const core = new THREE.Mesh(
+  new THREE.SphereGeometry(R*0.985,48,32),
+  new THREE.MeshBasicMaterial({color:0x0b0b0f})
+);
+globe.add(core);
+const grid = new THREE.Mesh(
+  new THREE.SphereGeometry(R,48,30),
+  new THREE.MeshBasicMaterial({color:0x33414c,wireframe:true,transparent:true,opacity:0.42})
+);
+globe.add(grid);
+
+/* anillos ecuador/meridiano dorados sutiles */
+function ring(rot){
+  const g=new THREE.RingGeometry(R*1.001,R*1.004,96);
+  const m=new THREE.MeshBasicMaterial({color:0xc9a227,transparent:true,opacity:0.25,side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(g,m); mesh.rotation.x=rot; return mesh;
+}
+globe.add(ring(Math.PI/2)); globe.add(ring(0));
+
+/* estrellas */
+(function(){
+  const N=1400,pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    const r=R*(5+Math.random()*9);
+    const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th);
+    pos[i*3+1]=r*Math.sin(ph)*Math.sin(th);
+    pos[i*3+2]=r*Math.cos(ph);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0x6a6a72,size:0.7,sizeAttenuation:true,transparent:true,opacity:0.8})));
+})();
+
+function latLngToVec(lat,lng,radius){
+  const phi=(90-lat)*Math.PI/180, th=(lng+180)*Math.PI/180;
+  return new THREE.Vector3(
+    -radius*Math.sin(phi)*Math.cos(th),
+     radius*Math.cos(phi),
+     radius*Math.sin(phi)*Math.sin(th)
+  );
+}
+
+/* una púa (cilindro) + glow por país */
+const UP=new THREE.Vector3(0,1,0);
+const spikes = PAISES.map(p=>{
+  const base=latLngToVec(p.lat,p.lng,R);
+  const dir=base.clone().normalize();
+  const geo=new THREE.CylinderGeometry(0.6,1.1,1,6,1,false);
+  geo.translate(0,0.5,0); // pivote en la base
+  const mat=new THREE.MeshBasicMaterial({color:0x8a9099,transparent:true,opacity:0.95});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.copy(base);
+  mesh.quaternion.setFromUnitVectors(UP,dir);
+  mesh.userData.code=p.code;
+  globe.add(mesh);
+
+  const glow=new THREE.Mesh(
+    new THREE.SphereGeometry(2.4,10,10),
+    new THREE.MeshBasicMaterial({color:0xe89020,transparent:true,opacity:0.0,blending:THREE.AdditiveBlending,depthWrite:false})
+  );
+  globe.add(glow);
+
+  return {pais:p,mesh,glow,base,dir,targetH:0,curH:0};
+});
+
+/* recalcula altura+color según filtro */
+function recompute(){
+  const usandoGenero = !!state.genero;
+  let max=0;
+  spikes.forEach(s=>{
+    const val = usandoGenero ? (s.pais.g[state.genero]||0) : total(s.pais);
+    s.val=val; if(val>max)max=val;
+  });
+  spikes.forEach(s=>{
+    if(s.val<=0){ s.targetH=0; s.mesh.visible=false; s.glow.visible=false; return; }
+    s.mesh.visible=true;
+    const t=Math.log(s.val+1)/Math.log(max+1);
+    s.targetH = 6 + 46*t;
+    let col;
+    if(usandoGenero){ col = colorFor(0.45+0.55*t); s.glow.visible=true; }
+    else { col = colorFor(t); s.glow.visible = t>0.55; }
+    s.mesh.material.color.copy(col);
+    s.mesh.material.opacity = usandoGenero ? 1 : 0.55+0.45*t;
+    s.glow.material.color.copy(usandoGenero?colorFor(0.9):col);
+    s.glow.material.opacity = (usandoGenero?0.5:0.4)*(0.4+0.6*t);
+    s.glow.scale.setScalar(0.7+0.9*t);
+  });
+}
+
+/* posiciona glow en la punta segun altura actual */
+function placeGlow(s){
+  const tip=s.base.clone().add(s.dir.clone().multiplyScalar(s.curH));
+  s.glow.position.copy(tip);
+}
+
+/* =====================================================================
+   INTERACCIÓN: órbita manual + raycaster
+   ===================================================================== */
+let dragging=false, moved=0, px=0, py=0;
+let velY=0;
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+
+function pointerDown(x,y){dragging=true;moved=0;px=x;py=y;}
+function pointerMove(x,y,clientX,clientY){
+  // tooltip hover
+  hover(clientX,clientY);
+  if(!dragging)return;
+  const dx=x-px,dy=y-py; moved+=Math.abs(dx)+Math.abs(dy);
+  globe.rotation.y += dx*0.005;
+  globe.rotation.x += dy*0.005;
+  globe.rotation.x = Math.max(-1.2,Math.min(1.2,globe.rotation.x));
+  velY = dx*0.005;
+  px=x;py=y;
+}
+function pointerUp(clientX,clientY){
+  if(dragging && moved<6){ pickAt(clientX,clientY); }
+  dragging=false;
+}
+
+function setMouse(clientX,clientY){
+  const r=canvas.getBoundingClientRect();
+  mouse.x=((clientX-r.left)/r.width)*2-1;
+  mouse.y=-((clientY-r.top)/r.height)*2+1;
+}
+function pickAt(clientX,clientY){
+  setMouse(clientX,clientY);
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(spikes.filter(s=>s.mesh.visible).map(s=>s.mesh));
+  if(hits.length){ seleccionarPais(hits[0].object.userData.code); }
+}
+const tip=document.getElementById('am-tip');
+function hover(clientX,clientY){
+  if(dragging){tip.style.display='none';return;}
+  setMouse(clientX,clientY);
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(spikes.filter(s=>s.mesh.visible).map(s=>s.mesh));
+  if(hits.length){
+    const s=spikes.find(x=>x.mesh===hits[0].object);
+    tip.querySelector('.tn').innerHTML=flagImg(s.pais.code,13)+' '+s.pais.name;
+    tip.querySelector('.tv').textContent=fmt(s.val)+(state.genero?(' · '+state.genero):' bandas');
+    tip.style.display='block';
+    tip.style.left=(clientX+14)+'px';
+    tip.style.top=(clientY+14)+'px';
+    canvas.style.cursor='pointer';
+  } else { tip.style.display='none'; canvas.style.cursor='grab'; }
+}
+
+canvas.addEventListener('mousedown',e=>pointerDown(e.clientX,e.clientY));
+window.addEventListener('mousemove',e=>pointerMove(e.clientX,e.clientY,e.clientX,e.clientY));
+window.addEventListener('mouseup',e=>pointerUp(e.clientX,e.clientY));
+canvas.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.max(R*1.6,Math.min(R*5,camDist+e.deltaY*0.12));},{passive:false});
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0];pointerDown(t.clientX,t.clientY);},{passive:true});
+canvas.addEventListener('touchmove',e=>{const t=e.touches[0];pointerMove(t.clientX,t.clientY,t.clientX,t.clientY);},{passive:true});
+canvas.addEventListener('touchend',e=>{const t=e.changedTouches[0];pointerUp(t.clientX,t.clientY);},{passive:true});
+
+/* =====================================================================
+   PANELES: lista de géneros, treemap, detalle país
+   ===================================================================== */
+const genresEl=document.getElementById('am-genres');
+const allBtn=document.getElementById('am-all');
+const maxGen=Math.max(...Object.values(generoTotales));
+const rowEls={};
+GENEROS.slice().sort((a,b)=>generoTotales[b]-generoTotales[a]).forEach(g=>{
+  const row=document.createElement('div');
+  row.className='am-grow';
+  row.innerHTML=`<span class="gname">${g}</span><span class="gcount">${fmt(generoTotales[g])}</span><span class="gbar" style="width:${(generoTotales[g]/maxGen*100).toFixed(0)}%"></span>`;
+  row.addEventListener('click',()=>toggleGenero(g));
+  genresEl.appendChild(row);
+  rowEls[g]=row;
+});
+allBtn.addEventListener('click',()=>setGenero(null));
+
+function toggleGenero(g){ setGenero(state.genero===g?null:g); }
+
+function setGenero(g){
+  state.genero=g;
+  // resaltar lista
+  Object.entries(rowEls).forEach(([k,el])=>el.classList.toggle('active',k===g));
+  allBtn.classList.toggle('muted',!!g);
+  // KPIs + status
+  const focusEl=document.getElementById('kpi-focus');
+  if(g){
+    focusEl.textContent=g; focusEl.classList.add('hot');
+    document.getElementById('kpi-focus-l').textContent=fmt(generoTotales[g])+' bandas';
+    document.getElementById('am-status').innerHTML=`Filtro activo · <b>${g}</b>`;
+  }else{
+    focusEl.textContent='Todos';
+    document.getElementById('kpi-focus-l').textContent='En foco';
+    document.getElementById('am-status').innerHTML=`Mostrando <b>todos</b> los géneros`;
+  }
+  recompute();
+  updateTree();
+}
+
+/* ---- treemap (ECharts) ---- */
+const treeChart=echarts.init(document.getElementById('am-tree'));
+const palette=["#c8341f","#d8521f","#e07a1e","#e89020","#c9a227","#b88a1f",
+               "#9a7c4a","#7d8590","#8a9099","#6f7680","#a0561a","#5f6670"];
+function treeData(){
+  return GENEROS.map((g,i)=>({
+    name:g, value:generoTotales[g],
+    itemStyle:{
+      color:palette[i%palette.length],
+      borderColor:'#08080a',borderWidth:2,
+      opacity: state.genero? (state.genero===g?1:0.28) : 1,
+      borderColorSaturation: state.genero===g?0.9:undefined
+    }
+  }));
+}
+function treeOption(){
+  return {
+    backgroundColor:'transparent',
+    series:[{
+      type:'treemap',roam:false,nodeClick:false,breadcrumb:{show:false},
+      width:'100%',height:'100%',top:6,left:6,right:6,bottom:6,
+      itemStyle:{gapWidth:2},
+      label:{show:true,formatter:p=>p.name+'\n'+fmt(p.value),
+             color:'#0d0b0a',fontFamily:'Oswald',fontWeight:500,fontSize:12,
+             lineHeight:15,textShadowColor:'rgba(255,255,255,0.25)',textShadowBlur:1},
+      data:treeData()
+    }]
+  };
+}
+treeChart.setOption(treeOption());
+treeChart.on('click',p=>{ if(p.name && GENEROS.includes(p.name)) toggleGenero(p.name); });
+function updateTree(){ treeChart.setOption(treeOption()); }
+
+/* ---- detalle país ---- */
+const detailEl=document.getElementById('am-detail');
+const treeView=document.getElementById('am-tree-view');
+const rhead=document.getElementById('am-rhead');
+document.getElementById('am-back').addEventListener('click',()=>cerrarDetalle());
+
+function seleccionarPais(code){
+  const p=PAISES.find(x=>x.code===code); if(!p)return;
+  state.pais=code;
+  document.getElementById('d-bigflag').innerHTML=flagImg(p.code,34);
+  document.getElementById('d-flag').textContent=p.code+' · '+p.ciudades[0];
+  document.getElementById('d-name').textContent=p.name;
+  document.getElementById('d-total').innerHTML=`<b>${fmt(total(p))}</b> bandas registradas`;
+  // géneros del país (barras)
+  const gs=Object.entries(p.g).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const gmax=gs[0][1];
+  document.getElementById('d-genres').innerHTML=gs.map(([n,v])=>
+    `<div class="am-drow"><span class="n">${n}</span><span class="b" style="width:${(v/gmax*96).toFixed(0)}px"></span><span class="c">${fmt(v)}</span></div>`
+  ).join('');
+  document.getElementById('d-bands').innerHTML=p.bandas.map(b=>`<span class="am-band">${b}</span>`).join('');
+  document.getElementById('d-cities').innerHTML=p.ciudades.map(c=>`<b>${c}</b>`).join(' · ');
+  rhead.querySelector('h2').textContent='Ficha de país';
+  rhead.querySelector('p').textContent='Datos de muestra para esta vista';
+  treeView.style.display='none';
+  detailEl.classList.add('show');
+}
+function cerrarDetalle(){
+  state.pais=null;
+  detailEl.classList.remove('show');
+  treeView.style.display='flex';
+  rhead.querySelector('h2').textContent='El mundo por género';
+  rhead.querySelector('p').textContent='Tamaño = nº de bandas. Clic para filtrar.';
+}
+
+/* KPIs base */
+document.getElementById('kpi-bands').textContent=fmt(GRAN_TOTAL);
+document.getElementById('kpi-countries').textContent=PAISES.length;
+
+/* botón pausar/reanudar rotación */
+const pauseBtn=document.getElementById('am-pause');
+pauseBtn.addEventListener('click',()=>{
+  state.rotando=!state.rotando;
+  pauseBtn.classList.toggle('paused',!state.rotando);
+  document.getElementById('am-pause-ic').textContent=state.rotando?'❚❚':'▶';
+  document.getElementById('am-pause-tx').textContent=state.rotando?'Pausar giro':'Reanudar giro';
+  if(!state.rotando) velY=0;
+});
+
+/* =====================================================================
+   ARRANQUE + ANIMACIÓN
+   ===================================================================== */
+recompute();
+let t0=null, intro=reduce?1:0;
+function resize(){
+  const w=wrap.clientWidth||800,h=wrap.clientHeight||600;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+  treeChart.resize();
+}
+window.addEventListener('resize',resize);
+resize();
+
+function loop(ts){
+  if(t0===null)t0=ts;
+  if(intro<1){ intro=Math.min(1,(ts-t0)/1200); }
+  // crecimiento de púas (con stagger por longitud)
+  spikes.forEach((s,i)=>{
+    const local = Math.max(0,Math.min(1,(intro*1.3)-(i/spikes.length)*0.3));
+    const ease = 1-Math.pow(1-local,3);
+    const goal = s.targetH * ease;
+    s.curH += (goal-s.curH)*0.18;
+    s.mesh.scale.y = Math.max(0.001,s.curH);
+    placeGlow(s);
+  });
+  // rotación ambiente / inercia
+  if(!dragging){
+    if(Math.abs(velY)>0.0002){ globe.rotation.y+=velY; velY*=0.94; }
+    else if(!reduce && !state.pais && state.rotando){ globe.rotation.y+=0.0009; }
+  }
+  camera.position.set(0,0,camDist);
+  camera.lookAt(0,0,0);
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Atlas Metallum — pipeline de datos
+requests>=2.31
+beautifulsoup4>=4.12
+pandas>=2.0
+pycountry>=22.0         # nombres de país por ISO (lista fija, sin scrapear /browse/country)
+scrapling==0.2.99       # + camoufox: pasa el Cloudflare Turnstile de Metal Archives
+playwright>=1.40        # usado solo para verificar el front en headless
+# enmet>=0.8            # (Fase 3, opcional) enriquecer bandas individuales
+
+# Tras instalar, descarga el navegador:
+#   python -m playwright install chromium
