@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Forja del Metal — Atlas genealógico</title>
+
+<!-- Leaflet (CDN) — lienzo de pan/zoom; Capa 3 (arte) y Capa 4 (timeline) se montarán encima -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0a0a0c; --bg2:#111114; --panel:#15151a;
+  --bone:#d7d2c8; --bone-dim:#8c8880;
+  --silver:#c9ccd1; --gold:#c9a44a; --gold-soft:#e7cd83; --fire:#b3331f;
+  --line:#2a2a31; --accent:var(--gold);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--bone);
+  font-family:'Oswald',system-ui,sans-serif;overflow:hidden}
+#map{position:absolute;inset:0;background:
+  radial-gradient(ellipse at 50% 35%, #16161b 0%, #0a0a0c 70%)}
+.leaflet-container{background:transparent;font-family:'Oswald',sans-serif}
+
+/* ---- header / barra superior ---- */
+#top{position:absolute;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;
+  gap:16px;padding:12px 18px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(8,8,10,.92),rgba(8,8,10,0))}
+#top .t-title{font-family:'Cinzel',serif;font-weight:700;font-size:20px;letter-spacing:.04em;
+  color:var(--gold-soft);text-shadow:0 1px 2px #000;pointer-events:auto}
+#top .t-sub{font-size:12.5px;color:var(--bone-dim);letter-spacing:.03em;pointer-events:auto}
+#top .spacer{flex:1}
+.t-btn{pointer-events:auto;cursor:pointer;text-decoration:none;
+  font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.05em;
+  color:var(--bone);background:rgba(20,20,26,.8);border:1px solid var(--line);
+  padding:7px 13px;border-radius:6px;transition:border-color .15s,color .15s}
+.t-btn:hover{border-color:var(--accent);color:var(--gold-soft)}
+
+/* ---- leyenda ---- */
+#leyenda{position:absolute;left:14px;bottom:14px;z-index:1000;
+  background:rgba(17,17,20,.86);border:1px solid var(--line);border-radius:8px;
+  padding:10px 12px;font-size:12px;color:var(--bone-dim);max-width:230px;backdrop-filter:blur(3px)}
+#leyenda b{color:var(--bone);font-weight:600}
+.lg-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.lg-dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+
+/* ---- etiquetas de nodo (tooltips permanentes) ---- */
+.lab{background:transparent !important;border:none !important;box-shadow:none !important;
+  color:var(--bone);font-size:11px;font-weight:300;letter-spacing:.02em;
+  text-shadow:0 1px 3px #000,0 0 2px #000;padding:0 !important;white-space:nowrap;
+  transition:opacity .18s}
+.lab.raiz{color:var(--gold-soft);font-weight:600;font-size:12.5px}
+.lab.infl{color:var(--bone-dim);font-style:italic}
+.lab.dim{opacity:.12}
+.leaflet-tooltip-right:before{display:none}
+
+/* ---- columnas: cabeceras de era ---- */
+.era-h{background:transparent !important;border:none !important;box-shadow:none !important;
+  color:var(--bone-dim);font-family:'Cinzel',serif;font-size:13px;letter-spacing:.12em;
+  text-transform:uppercase;text-shadow:0 1px 3px #000;padding:0 !important;text-align:center}
+
+/* ---- ficha lateral ---- */
+#ficha{position:absolute;top:0;right:0;height:100%;width:360px;max-width:88vw;z-index:1200;
+  background:linear-gradient(180deg,#16161b,#101013);border-left:1px solid var(--line);
+  box-shadow:-14px 0 40px rgba(0,0,0,.5);transform:translateX(100%);
+  transition:transform .22s ease;overflow-y:auto;padding:0}
+#ficha.open{transform:translateX(0)}
+.f-head{position:sticky;top:0;background:linear-gradient(180deg,#1a1a20,#16161b);
+  border-bottom:1px solid var(--line);padding:16px 18px 14px}
+.f-close{position:absolute;top:12px;right:14px;cursor:pointer;color:var(--bone-dim);
+  font-size:20px;line-height:1;background:none;border:none}
+.f-close:hover{color:var(--fire)}
+.f-name{font-family:'Cinzel',serif;font-weight:700;font-size:21px;color:var(--gold-soft);
+  margin:0;padding-right:24px;line-height:1.15}
+.f-en{color:var(--bone-dim);font-size:13px;margin-top:2px}
+.f-tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.badge{font-size:11px;letter-spacing:.04em;padding:3px 9px;border-radius:20px;
+  border:1px solid var(--line);color:var(--bone-dim);text-transform:uppercase}
+.badge.tipo{border-color:var(--accent);color:var(--gold-soft)}
+.badge.conf-alta{border-color:#3c6b46;color:#9fd3a8}
+.badge.conf-media{border-color:#7a6a32;color:#d8c178}
+.badge.conf-baja{border-color:#7a3a32;color:#e0a79b}
+.f-body{padding:16px 18px 28px}
+.f-sec{margin-bottom:15px}
+.f-sec h4{margin:0 0 5px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--bone-dim);font-weight:600;font-family:'Oswald',sans-serif}
+.f-sec p{margin:0;font-size:14px;line-height:1.5;color:var(--bone);font-weight:300}
+.chip{display:inline-block;font-size:12.5px;padding:3px 9px;margin:3px 4px 0 0;border-radius:5px;
+  background:rgba(201,164,74,.08);border:1px solid var(--line);color:var(--bone)}
+.chip.link{cursor:pointer}
+.chip.link:hover{border-color:var(--accent);color:var(--gold-soft)}
+.f-src a{color:var(--silver);font-size:12px;display:block;margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f-src a:hover{color:var(--gold-soft)}
+.f-globo{margin-top:6px;width:100%;padding:10px;border-radius:7px;cursor:not-allowed;
+  background:rgba(201,164,74,.06);border:1px dashed var(--line);color:var(--bone-dim);
+  font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.04em}
+.muted{color:var(--bone-dim);font-style:italic}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="top">
+  <span class="t-title">⚒ La Forja del Metal</span>
+  <span class="t-sub">Atlas genealógico · 84 géneros</span>
+  <span class="spacer"></span>
+  <a class="t-btn" id="btn-reset" title="Centrar el grafo">⟲ Reorientar</a>
+  <a class="t-btn" href="index.html" title="Volver al globo">🌍 Volver al globo</a>
+</div>
+
+<div id="leyenda">
+  <b>Linaje del metal</b><br>
+  Posición = década de origen (el tiempo corre →). El ancho de cada zona crece con cuántos géneros nacieron ahí.<br>
+  <span class="lg-row"><span class="lg-dot" style="background:#c9a44a"></span>Raíz (subgénero madre)</span>
+  <span class="lg-row"><span class="lg-dot" style="background:#9b9079;border:1px dashed #6f6a5e"></span>Influencia pre-metal</span>
+  <span class="lg-row"><span class="lg-dot" style="background:#8a7b53"></span>Subgénero</span>
+  <span class="lg-row" style="margin-top:9px;color:var(--bone-dim)">Hover = vistazo del linaje. <b style="color:var(--bone)">Clic</b> = fijarlo. Clic en vacío / Esc = soltar.</span>
+</div>
+
+<aside id="ficha" aria-hidden="true">
+  <div class="f-head">
+    <button class="f-close" id="f-close" aria-label="Cerrar">✕</button>
+    <h3 class="f-name" id="f-name">—</h3>
+    <div class="f-en" id="f-en"></div>
+    <div class="f-tags" id="f-tags"></div>
+  </div>
+  <div class="f-body" id="f-body"></div>
+</aside>
+
+<script>
+"use strict";
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ACCENT = '#c9a44a', ACCENT_SOFT = '#e7cd83', EDGE = '#34343d', FIRE = '#b3331f';
+
+// ---------- carga de datos ----------
+fetch('data/genealogia/generos.json')
+  .then(r => { if(!r.ok) throw new Error('No se pudo cargar generos.json'); return r.json(); })
+  .then(build)
+  .catch(err => {
+    document.getElementById('map').innerHTML =
+      '<div style="padding:40px;color:#b3331f;font-family:Oswald">Error cargando la genealogía: '+err.message+'</div>';
+    console.error(err);
+  });
+
+// ---------- helpers de era ----------
+function firstDecade(s){
+  if(!s) return null;
+  const m = String(s).match(/(19|20)(\d)0s/);
+  return m ? parseInt(m[1]+m[2]+'0', 10) : null;
+}
+
+function build(nodos){
+  const byId = new Map(nodos.map(n => [n.id, n]));
+
+  // década efectiva: la propia o, si es null, la del ancestro más cercano (genero_padre)
+  function decadeOf(n){
+    let cur = n, guard = new Set();
+    while(cur){
+      const d = firstDecade(cur.decada_origen);
+      if(d != null) return d;
+      if(!cur.genero_padre || guard.has(cur.id)) break;
+      guard.add(cur.id); cur = byId.get(cur.genero_padre);
+    }
+    return null;
+  }
+  // columna por DÉCADA real (0=pre-metal · 1=60s … 7=2020s)
+  const DECADE_COL = {1960:1, 1970:2, 1980:3, 1990:4, 2000:5, 2010:6, 2020:7};
+  function colOf(n){
+    if(n.tipo === 'influencia_externa') return 0;          // pre-metal, origen de la cinta
+    let d = decadeOf(n);
+    if(d == null) d = 1980;                                 // fallback prudente
+    d = Math.min(2020, Math.max(1960, d));                 // clamp al rango de columnas
+    return DECADE_COL[d];
+  }
+  // familia: sube por genero_padre hasta una raíz (o sí mismo si raíz/influencia)
+  function familyOf(n){
+    let cur = n, guard = new Set();
+    while(cur.tipo !== 'raiz' && cur.tipo !== 'influencia_externa'){
+      if(!cur.genero_padre || !byId.has(cur.genero_padre) || guard.has(cur.id)) break;
+      guard.add(cur.id); cur = byId.get(cur.genero_padre);
+    }
+    return cur;
+  }
+  const INFL = '__infl__';
+  const famKey = n => n.tipo === 'influencia_externa' ? INFL : familyOf(n).id;
+  const rank   = n => (n.tipo === 'raiz' || n.tipo === 'influencia_externa') ? 0 : 1;
+
+  // ---------- layout v3: TIEMPO HONESTO · zonas de década de ancho variable ----------
+  // x = década REAL (más a la derecha = más tarde). Cada década es una ZONA cuyo ancho crece
+  // con cuántos géneros nacieron ahí (los 80s, con 11 de las 17 raíces, es la más ANCHA).
+  // Dentro de cada zona los nodos se reparten en 2D holgado (más ancho que alto), NO en torre
+  // ni en fila. El linaje se lee por las aristas, no por la posición. (La x fina dentro de una
+  // zona es solo reparto visual: la data es por DÉCADA, no por año exacto.)
+  const NODE_DX = 200, NODE_DY = 90, ZONE_GAP = 170, MIN_W = 200;
+  const ROOT_DX = 290, SUB_ROWS_MAX = 3;          // raíces muy separadas; subgéneros máx 3 filas (más aire que v3.0)
+
+  function zoneOf(n){
+    if(n.tipo === 'influencia_externa') return 'premetal';   // pre-metal, origen de la cinta
+    let d = decadeOf(n);                                      // null hereda la del padre
+    if(d == null) d = 1980;
+    return String(Math.min(2020, Math.max(1960, d)));
+  }
+  const ZONE_ORDER = ['premetal','1960','1970','1980','1990','2000','2010','2020'];
+  const ZONE_LABEL = { premetal:'Pre-metal', '1960':'60s', '1970':'70s', '1980':'80s',
+                       '1990':'90s', '2000':'2000s', '2010':'2010s', '2020':'2020s' };
+  const famName = n => (n.tipo === 'influencia_externa') ? n.id : familyOf(n).id;
+  const isRoot  = n => (n.tipo === 'raiz' || n.tipo === 'influencia_externa');
+
+  const byZone = new Map(ZONE_ORDER.map(z => [z, []]));
+  for(const n of nodos) byZone.get(zoneOf(n)).push(n);
+
+  // Cada zona: RAÍCES en la fila de arriba, repartidas a lo ancho de toda la zona (así el
+  // resumen "raíces por década" se lee sin encimes). SUBGÉNEROS en una grilla holgada debajo,
+  // agrupados por familia. Ancho de zona ∝ nº de nodos -> los 80s, los más poblados, la más ancha.
+  const zoneCenterX = {};
+  let cursorX = 0, maxHalfH = NODE_DY/2;
+  for(const z of ZONE_ORDER){
+    const all   = byZone.get(z);
+    const roots = all.filter(isRoot).sort((a,b)=> a.nombre_es.localeCompare(b.nombre_es));
+    const subs  = all.filter(n => !isRoot(n))
+      .sort((a,b)=> famName(a).localeCompare(famName(b)) || a.nombre_es.localeCompare(b.nombre_es));
+    const R = roots.length, S = subs.length;
+    const rootRows = R > 6 ? 2 : 1;               // zonas con muchas raíces (80s) -> 2 filas
+    const rootCols = R ? Math.ceil(R/rootRows) : 0;
+    const subRows = S ? Math.min(SUB_ROWS_MAX, Math.max(1, Math.round(Math.sqrt(S/2.5)))) : 0;
+    const subCols = subRows ? Math.ceil(S/subRows) : 0;
+    const zoneW = Math.max(MIN_W, rootCols*ROOT_DX, subCols*NODE_DX);
+    const cx = cursorX + zoneW/2;
+    zoneCenterX[z] = cx;
+    const totalRows = rootRows + subRows;
+    const topRow = -(totalRows-1)/2;              // filas de arriba = raíces
+    const rootGapX = rootCols > 1 ? (zoneW*0.9)/rootCols : 0;
+    roots.forEach((m,i) => {
+      const col = i%rootCols, row = Math.floor(i/rootCols);
+      m._x = cx + (col-(rootCols-1)/2)*rootGapX;
+      m._y = (topRow + row)*NODE_DY;
+      maxHalfH = Math.max(maxHalfH, Math.abs(m._y)+NODE_DY/2);
+    });
+    subs.forEach((m,idx) => {
+      const col = idx%subCols, row = Math.floor(idx/subCols);
+      m._x = cx + (col-(subCols-1)/2)*NODE_DX;
+      m._y = (topRow + rootRows + row)*NODE_DY;
+      maxHalfH = Math.max(maxHalfH, Math.abs(m._y)+NODE_DY/2);
+    });
+    cursorX += zoneW + ZONE_GAP;
+  }
+  const totalW = cursorX - ZONE_GAP;
+
+  // ---------- mapa Leaflet (CRS.Simple) ----------
+  const map = L.map('map', {
+    crs: L.CRS.Simple, minZoom: -4, maxZoom: 3, zoomSnap: 0.25,
+    attributionControl: false, zoomControl: true
+  });
+  L.control.zoom({position:'bottomright'});
+  const ll = (n) => L.latLng(-n._y, n._x);   // lat hacia abajo a medida que crece _y
+
+  // ---------- aristas (linaje) deduplicadas ----------
+  const seen = new Set(), edges = [];
+  const parents = new Map(), children = new Map();
+  function addEdge(a, b){
+    if(!byId.has(a) || !byId.has(b)) return;     // ignora ids huérfanos
+    const key = a+'->'+b;
+    if(seen.has(key)) return;
+    seen.add(key); edges.push([a,b]);
+    if(!children.has(a)) children.set(a, []); children.get(a).push(b);
+    if(!parents.has(b))  parents.set(b, []);  parents.get(b).push(a);
+  }
+  for(const n of nodos){
+    (n.origenes_estilisticos || []).forEach(p => addEdge(p, n.id));   // p = padre, n = hijo
+    (n.formas_derivadas      || []).forEach(h => addEdge(n.id, h));   // n = padre, h = hijo
+  }
+
+  // dibujar aristas
+  const edgeLayers = edges.map(([a,b]) => {
+    const line = L.polyline([ll(byId.get(a)), ll(byId.get(b))], {
+      color: EDGE, weight: 1.1, opacity: 0, interactive: false   // REPOSO: aristas apagadas (mata el spaghetti)
+    }).addTo(map);
+    return { a, b, line };
+  });
+
+  // ---------- nodos ----------
+  function nodeStyle(n){
+    if(n.tipo === 'raiz')  return { radius:10, color:'#7a6224', weight:1.5, fillColor:ACCENT, fillOpacity:.92 };
+    if(n.tipo === 'influencia_externa')
+      return { radius:8, color:'#6f6a5e', weight:1.5, dashArray:'2,3', fillColor:'#9b9079', fillOpacity:.55 };
+    const baja = n.confianza === 'baja';
+    return { radius:6.5, color: baja?'#5c564a':'#7d6e49', weight:1.2,
+             dashArray: baja?'2,3':null, fillColor:'#8a7b53', fillOpacity:.8 };
+  }
+  const markerById = new Map();
+  for(const n of nodos){
+    const mk = L.circleMarker(ll(n), nodeStyle(n)).addTo(map);
+    mk.bindTooltip(n.nombre_es, {
+      permanent:true, direction:'right', offset:[8,0],
+      className:'lab '+(n.tipo==='raiz'?'raiz':n.tipo==='influencia_externa'?'infl':'sub')
+    });
+    mk.on('mouseover', () => { if(!fixedId) highlight(n.id); });   // hover rápido solo si no hay nada fijado
+    mk.on('mouseout',  () => { if(!fixedId) clearHL(); });
+    mk.on('click', (e) => { L.DomEvent.stopPropagation(e); fixNode(n.id); });   // clic = fija el linaje del hover
+    mk._node = n;
+    markerById.set(n.id, mk);
+  }
+
+  // ---------- cabeceras de década (centradas sobre cada zona) ----------
+  const headerLat = maxHalfH + 64;
+  ZONE_ORDER.forEach(z => {
+    L.marker(L.latLng(headerLat, zoneCenterX[z]), {
+      icon: L.divIcon({className:'era-h', html:ZONE_LABEL[z], iconSize:[140,18], iconAnchor:[70,9]}),
+      interactive:false, keyboard:false
+    }).addTo(map);
+  });
+
+  // ---------- bounds / vista inicial ----------
+  const bounds = L.latLngBounds([[ -(maxHalfH+60), -160 ], [ headerLat+40, totalW + 200 ]]);
+  function resetView(){ map.fitBounds(bounds, {padding:[30,30]}); }
+  resetView();
+  map.setMaxBounds(bounds.pad(0.6));
+  document.getElementById('btn-reset').addEventListener('click', () => { if(fixedId) cerrarFicha(); resetView(); });
+
+  // ---------- zoom semántico: lejos = solo familias; cerca = subgéneros ----------
+  // (la cinta no crece; crece la info adentro). Las raíces/influencias siempre rotuladas;
+  // las etiquetas de subgénero aparecen al acercar más allá del umbral.
+  const LABEL_TH = map.getZoom() + 0.5;
+  function updateLabelDetail(){
+    const z = map.getZoom();
+    markerById.forEach(mk => {
+      const n = mk._node;
+      const tt = mk.getTooltip(); const el = tt && tt.getElement();
+      if(!el) return;
+      // lejos: solo las 17 raíces. Cerca (>= umbral): influencias + subgéneros también.
+      const always = (n.tipo === 'raiz');
+      el.style.display = (always || z >= LABEL_TH) ? '' : 'none';
+    });
+  }
+  map.on('zoomend', updateLabelDetail);
+  requestAnimationFrame(updateLabelDetail);
+
+  // fade-in suave de los nodos (si no hay reduce-motion)
+  if(!REDUCE_MOTION){
+    const cont = map.getPane('overlayPane');
+    const mkPane = map.getPane('markerPane');
+    [cont, mkPane].forEach(p => { p.style.transition='opacity .6s ease'; p.style.opacity='0'; });
+    requestAnimationFrame(() => { [cont, mkPane].forEach(p => p.style.opacity='1'); });
+  }
+
+  // ---------- highlight de linaje (hover) ----------
+  function lineage(id){
+    const nodes = new Set([id]), eset = new Set();
+    let stack = [id];                              // hacia arriba (padres)
+    while(stack.length){
+      const c = stack.pop();
+      for(const p of (parents.get(c) || [])){
+        eset.add(p+'->'+c);
+        if(!nodes.has(p)){ nodes.add(p); stack.push(p); }
+      }
+    }
+    stack = [id];                                  // hacia abajo (hijos)
+    while(stack.length){
+      const p = stack.pop();
+      for(const c of (children.get(p) || [])){
+        eset.add(p+'->'+c);
+        if(!nodes.has(c)){ nodes.add(c); stack.push(c); }
+      }
+    }
+    return { nodes, eset };
+  }
+  function highlight(id){      // VISTAZO rápido de hover (BFS linaje, temporal) — solo si no hay nada fijado
+    const { nodes, eset } = lineage(id);
+    markerById.forEach((mk, nid) => {
+      const on = nodes.has(nid);
+      const base = nodeStyle(mk._node);
+      mk.setStyle({ opacity: on?1:.14, fillOpacity: on?base.fillOpacity:.07 });
+      const el = mk.getTooltip() && mk.getTooltip().getElement();
+      if(el) el.classList.toggle('dim', !on);
+    });
+    edgeLayers.forEach(e => {
+      const on = eset.has(e.a+'->'+e.b);
+      e.line.setStyle({ color: on?ACCENT:EDGE, weight: on?2:1.1, opacity: on?.9:0 });  // resto APAGADO
+    });
+  }
+  function clearHL(){          // vuelve a REPOSO: nodos base, labels normales, aristas apagadas
+    markerById.forEach((mk) => {
+      mk.setStyle(nodeStyle(mk._node));
+      const el = mk.getTooltip() && mk.getTooltip().getElement();
+      if(el){ el.classList.remove('dim'); el.style.color=''; el.style.opacity=''; }
+    });
+    edgeLayers.forEach(e => e.line.setStyle({ opacity:0 }));
+  }
+
+  // ---------- PARENTESCO (clic-fija) ----------
+  // Reusa los mapas parents/children (las 176 aristas padre->hijo). Calcula el árbol familiar
+  // desde N y lo pinta por categoría (verde arriba / cian abajo / ámbar lateral), persistente.
+  let fixedId = null;
+  const _uniq = a => [...new Set(a)];
+  function kinship(id){
+    const padres  = _uniq(parents.get(id)  || []);
+    const hijos   = _uniq(children.get(id) || []);
+    const abuelos = _uniq(padres.flatMap(p => parents.get(p)  || [])).filter(x => x!==id && !padres.includes(x));
+    const nietos  = _uniq(hijos .flatMap(h => children.get(h) || [])).filter(x => x!==id && !hijos.includes(x));
+    const hermanos= _uniq(padres.flatMap(p => children.get(p) || [])).filter(x => x!==id);
+    const tios    = _uniq(abuelos.flatMap(g => children.get(g)|| [])).filter(x => x!==id && !padres.includes(x));
+    const primos  = _uniq(tios  .flatMap(t => children.get(t) || [])).filter(x => x!==id);
+    return { padres, abuelos, hijos, nietos, hermanos, tios, primos };
+  }
+  function fixNode(id){          // clic = FIJA el MISMO resaltado del hover (linaje), sin rebote
+    if(!byId.has(id)) return;
+    fixedId = id;
+    highlight(id);               // exactamente lo que muestra el hover, pero pegado
+    abrirFicha(id);
+  }
+  function unfix(){ fixedId = null; clearHL(); }
+
+  // ---------- ficha lateral ----------
+  const ficha = document.getElementById('ficha');
+  const fName = document.getElementById('f-name'), fEn = document.getElementById('f-en');
+  const fTags = document.getElementById('f-tags'), fBody = document.getElementById('f-body');
+  document.getElementById('f-close').addEventListener('click', cerrarFicha);
+
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const arr = x => Array.isArray(x) ? x : (x==null?[]:[x]);
+
+  function chipsIds(ids){
+    const valid = arr(ids).filter(i => byId.has(i));
+    if(!valid.length) return '<span class="muted">—</span>';
+    return valid.map(i =>
+      `<span class="chip link" data-goto="${esc(i)}">${esc(byId.get(i).nombre_es)}</span>`).join('');
+  }
+  function chipsText(xs){
+    const v = arr(xs).filter(Boolean);
+    return v.length ? v.map(x => `<span class="chip">${esc(x)}</span>`).join('') : '<span class="muted">—</span>';
+  }
+
+  function abrirFicha(id){
+    const n = byId.get(id); if(!n) return;
+    fName.textContent = n.nombre_es;
+    fEn.textContent = n.nombre_en && n.nombre_en !== n.nombre_es ? n.nombre_en : '';
+    const tipoLabel = { raiz:'Raíz', subgenero:'Subgénero', influencia_externa:'Influencia externa' }[n.tipo] || n.tipo;
+    fTags.innerHTML =
+      `<span class="badge tipo">${esc(tipoLabel)}</span>` +
+      (n.decada_origen ? `<span class="badge">${esc(n.decada_origen)}</span>` : '') +
+      `<span class="badge conf-${esc(n.confianza)}">confianza ${esc(n.confianza)}</span>`;
+
+    const k = kinship(id);   // parentesco preciso (de las mismas aristas del grafo)
+    fBody.innerHTML =
+      sec('Descripción', `<p>${esc(n.descripcion) || '<span class="muted">—</span>'}</p>`) +
+      secInline('Países de origen', chipsText(n.paises_origen)) +
+      secInline('Escenas', chipsText(n.escenas)) +
+      secInline('Bandas seminales', chipsText(n.bandas_seminales)) +
+      secInline('Padres · de dónde viene', chipsIds(k.padres)) +
+      secInline('Hijos · a dónde llegó', chipsIds(k.hijos)) +
+      secInline('Hermanos', chipsIds(k.hermanos)) +
+      secInline('Tíos', chipsIds(k.tios)) +
+      secInline('Primos', chipsIds(k.primos)) +
+      (arr(n.fuentes).length ? sec('Fuentes',
+        '<div class="f-src">'+arr(n.fuentes).map(u =>
+          `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>`).join('')+'</div>') : '') +
+      `<button class="f-globo" disabled title="Se conecta en la Capa 2">🌍 Ver bandas en el globo · próximamente (Capa 2)</button>`;
+
+    // chips clicables -> enfocar ese nodo
+    fBody.querySelectorAll('.chip.link').forEach(ch =>
+      ch.addEventListener('click', () => focusNode(ch.getAttribute('data-goto'))));
+
+    ficha.classList.add('open'); ficha.setAttribute('aria-hidden','false');
+  }
+  function sec(h, inner){ return `<div class="f-sec"><h4>${h}</h4>${inner}</div>`; }
+  function secInline(h, inner){ return `<div class="f-sec"><h4>${h}</h4><div>${inner}</div></div>`; }
+  function cerrarFicha(){ ficha.classList.remove('open'); ficha.setAttribute('aria-hidden','true'); unfix(); }
+
+  function focusNode(id){      // clic en chip = SALTA el fijado a ese nodo
+    const n = byId.get(id); if(!n) return;
+    map.panTo(ll(n), { animate: !REDUCE_MOTION });
+    fixNode(id);
+  }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') cerrarFicha(); });
+  // clic en vacío -> des-fija y vuelve a reposo
+  map.on('click', () => { if(fixedId){ unfix(); cerrarFicha(); } });
+
+  console.log(`[Forja] ${nodos.length} nodos, ${edges.length} aristas, ${ZONE_ORDER.length} zonas de década.`);
+}
+</script>
+</body>
+</html>

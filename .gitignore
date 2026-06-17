@@ -1,0 +1,49 @@
+# =====================================================================
+#  Metal Globe — .gitignore
+#  Regla: el CODIGO y la data que el SITIO sirve (web/) SI van.
+#  La data PESADA cruda/regenerada (data/) y la basura de verificacion NO.
+#  (OJO: en .gitignore NO existen comentarios al final de linea -> van arriba)
+# =====================================================================
+
+# --- Data pesada cruda / regenerable (NO sube) ---
+# cache crudo de scraping
+data/cache/
+# dumps GeoNames (descargables)
+data/geonames/
+# CSV crudo de bandas (regenerable)
+data/bands_raw.csv
+# progreso del barrido
+data/scrape_progress.json
+# metricas Last.fm 22MB (el sitio usa dashboard.json)
+data/lastfm/*.jsonl
+# scrape enriquecido (parcial/parqueado)
+data/metallum/*.jsonl
+# barrido MusicBrainz (parcial/parqueado)
+data/musicbrainz/*.jsonl
+
+# SI suben (no ignorar): data/paises.json, data/genealogia/, data/geocode_*.json
+# y TODO web/ (fuente del deploy de GitHub Pages: index/forja + web/data + assets + vendor).
+
+# --- Basura de verificacion / sondas (raiz, prefijo "_") ---
+/_*.png
+/_*.py
+/_*_shots/
+
+# --- Config local de Claude Code (rutas de maquina, NO compartir) ---
+.claude/settings.local.json
+
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- Playwright / navegadores ---
+playwright-report/
+.cache/
+
+# --- Sistema ---
+.DS_Store
+Thumbs.db
+*.log
+.env
