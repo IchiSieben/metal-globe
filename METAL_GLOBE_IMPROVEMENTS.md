@@ -47,20 +47,31 @@ here is copying two files into `web/` and writing 5 steps.
 Suggested steps: what the globe shows (195,679 bands, 153 countries) → drag/zoom → click a
 country for its sheet → the genre filter → the treemap. Targets already have stable ids.
 
-## 3. Cut first paint — M
+## 3. First paint — mostly already solved (measured, not assumed)
 
-`bands_index.json` is **6.2 MB**. If it loads before first render, that dominates time-to-globe
-on a Lima connection. Worth measuring first, then:
+**This section was wrong when first written.** I proposed deferring `bands_index.json` and
+ECharts; both claims came from a summary rather than from reading the loading code. Measured
+on a 1440x900 viewport, served locally:
 
-- Load the globe from `atlas_data.json` (964 KB) alone; fetch `bands_index.json` only when a
-  country sheet actually opens. Per-country files under `data/admin1/` already work this way,
-  so the pattern exists.
-- `echarts.min.js` is **1.02 MB** of the 1.6 MB vendor bundle and is only needed for the
-  dashboard. `loadScriptOnce` already exists — defer it until the dashboard opens.
-- Serve `.json` gzipped. 34 MB of JSON compresses very well; this is a server config line, not
-  code.
+| | before | after |
+|---|---|---|
+| First load | 4.66 MB, 56 requests | **4.43 MB, 44 requests** |
 
-Expected: first meaningful paint on the globe without the 6.2 MB index or the 1 MB chart lib.
+What is actually true:
+
+- **`bands_index.json` (5.9 MB), `search_index.json` and Fuse are already deferred** behind
+  `ensure()`, loaded on first use of the band search. Nothing to do.
+- **ECharts (1 MB) cannot be deferred.** `#am-tree` is the treemap beside the globe — above the
+  fold by design — so its IntersectionObserver is firing correctly. I assumed it was misfiring
+  against a pre-layout position, moved the observer to after `load` + rAF, measured no
+  difference, and reverted.
+- **Flags were the real win, and it is done**: `loading="lazy"` cut 12 requests and 230 KB.
+
+**What is left, and it needs a decision rather than a patch:** `flagcdn.com` still serves
+detail SVGs where a 24px-tall flag is drawn — `ec.svg` is 212 KB for something rendered smaller
+than a favicon. Switching to flagcdn's raster sizes (`/w40/ec.png`) or vendoring a sprite would
+cut most of the remaining 304 KB, but both change how flags rasterise, so neither is a
+"no visual change" edit. See item 4.
 
 ## 4. Remove the last external dependency — S
 
