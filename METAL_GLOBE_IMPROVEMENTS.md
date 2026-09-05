@@ -8,32 +8,35 @@ Current state after the extraction commit: `index.html` 496 lines, `app.js` 3,02
 
 ---
 
-## 1. Finish the module split properly — L
+## 1. Finish the module split — L, and harder than it looked
 
-**Why it stopped where it did.** `app.js` has 231 top-level statements interleaved with the
-function declarations. A declaration hoists only inside its own script, so cutting the file by
-theme reorders execution against those statements and the globe stops booting. The split is
-real work, not a move.
+**Correction to the earlier assessment.** I previously wrote that the obstacle was 231
+top-level statements interleaved with the function declarations. That was wrong, and the
+attempt that proved it is worth recording.
 
-**How to do it safely.** Convert to ES modules with explicit exports, one seam at a time,
-re-running the pixel comparison after each:
+`data.js` extracted cleanly (10 pure aggregation functions, committed, pixel-identical). The
+same technique applied to the globe layer failed immediately: `ReferenceError: R is not
+defined`, thrown by `ring()` called from `boot()`.
 
-| Module | Roughly | Depends on |
-|---|---|---|
-| `data.js` | `prepararDatos`, `subCount*`, `fusionar`, `totalesGlobales`, `joyasOcultas` | nothing (pure) |
-| `globe.js` | three.js scene, textures, borders, pins, LOD | `data` for pin counts |
-| `interaction.js` | picking, hover, `flyTo`, pointer handlers | `globe` |
-| `ui-panel.js` | country/city sheet, band lists | `data`, `interaction` |
-| `filters.js` | genre tokens, chips, combo KPI | `data`, `globe` |
-| `search.js` | Fuse index, suggestions | `data` |
-| `dashboard.js` | Last.fm ECharts panels | lazy, independent |
+The reason is structural. **`function boot(DATA, esMock)` spans lines 220–2919 — 2,700 of
+app.js's 2,955 lines, 91% of the file.** Its body is not indented, which is why a
+column-zero scan read those lines as top-level. `const R`, `scene`, `camera`, `renderer`,
+`globe` and the rest are **locals of `boot`**, and every render, interaction and UI function is
+a **closure over them**. Moving any of those functions to another script severs the closure.
 
-Start with `data.js`: it is pure, has no three.js dependency, and proves the harness works
-before touching rendering. The mutable globals (`DATA`, `PAISES`, `state`) become a single
-exported store object — that is the actual work, and where behaviour can drift.
+So the real work is not "cut the file into modules". It is:
 
-**Guardrail:** the screenshot comparison from the extraction commit, masking the globe canvas,
-catches any regression outside the 3D view. Keep it as a script and run it per step.
+1. **Break `boot()` open first.** Its locals need to become an explicit context object — a
+   `scene` module owning `{renderer, scene, camera, globe, R, camDist}` — that the other
+   modules receive rather than close over. Until that exists, no further extraction is possible.
+2. Only then split render / interaction / UI, one at a time.
+
+`data.js` worked precisely because those ten functions were the only ones already outside
+`boot`, referencing genuine globals or their own arguments. It is not a template for the rest.
+
+**Estimate revised:** this is a day of careful work with the pixel harness after every step, not
+an afternoon. It is also the highest-leverage thing in the file — nothing else can be tested in
+isolation while 91% of the code lives in one closure.
 
 ## 2. Ship the opening tutorial — S
 
