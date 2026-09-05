@@ -50,8 +50,13 @@ NUEVA — modificar local no afecta lo que esa persona ve hasta que se suba a Ho
 ```
 Metallum/
 ├── web/                          ← lo que se sube a Hosting (public_html)
-│   ├── index.html                ← ⚠️ TODO el sitio vive ACÁ (web/index.html, NO en
-│   │                                la raíz). ~4,200 líneas / ~248KB.
+│   ├── index.html                ← esqueleto HTML (496 líneas). YA NO es el monolito.
+│   ├── styles.css                ← 898 líneas, extraídas de index.html sin cambios
+│   ├── data.js                   ← capa pura de agregación (10 funciones, sin THREE ni DOM)
+│   ├── app.js                    ← el resto (~2,955 líneas). ⚠️ el 91% vive dentro de
+│   │                                `boot()`: sus locales (scene, camera, R, globe) son
+│   │                                closures, por eso no se puede seguir partiendo sin
+│   │                                abrir boot() primero. Ver METAL_GLOBE_IMPROVEMENTS.md.
 │   └── data/
 │       ├── lastfm/dashboard.json ← agregado liviano ~23KB (lo que ve el cliente)
 │       └── atlas_data.json       ← data de géneros del sitio (roots + subgéneros)
