@@ -230,7 +230,12 @@ function flagEmoji(code){
 function flagImg(code,h){
   const iso=(code||'').toLowerCase();
   const em=flagEmoji(code);
+  // loading=lazy + decoding=async: los rankings pintan decenas de banderas de
+  // una vez y casi todas nacen fuera de pantalla. Sin esto el navegador pide
+  // TODAS al insertarlas (flagcdn sirve SVG de detalle: ec.svg pesa 212 KB).
+  // No cambia nada visualmente: la bandera visible se pide igual.
   return `<img class="am-flag" src="https://flagcdn.com/${iso}.svg" alt="${code}" `+
+         `loading="lazy" decoding="async" `+
          `style="height:${h}px;width:auto" `+
          `onerror="this.replaceWith(document.createTextNode('${em}'))">`;
 }
