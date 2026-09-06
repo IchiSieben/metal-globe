@@ -8,6 +8,48 @@ Current state after the extraction commit: `index.html` 496 lines, `app.js` 3,02
 
 ---
 
+## 0. Genre x country filtering — THE #1 user request
+
+Users ask for this more than anything else: *"black metal + death metal in Peru"*. The current
+genre selector makes it possible but tedious, and it is the single interaction most likely to
+decide whether someone stays on the page.
+
+The data already supports it — `subCountPais` and `filterMatchCount` compute exactly these
+intersections, and the combine toggle (OR / AND) exists. **The gap is UI, not data.**
+
+### Approach A — Filter bar over the globe · M
+
+A persistent horizontal bar: selected genres as removable chips, an OR/AND toggle, and a live
+count ("3 214 bandas · 41 países"). Clicking a country adds it as another chip, so
+country and genre become the same kind of token in one query.
+
+- **For:** one mental model, visible current state, shareable via URL params, and it survives
+  on mobile where the current side panel does not.
+- **Against:** takes vertical space from the globe, which is the hero.
+- **Effort:** medium. Reuses the existing filter engine; the work is the bar, the chip state
+  and URL sync.
+
+### Approach B — Genre treemap as the control · M-L
+
+Make the treemap that already sits beside the globe the selector: click a genre to filter,
+shift-click to add. The globe recolours to the selection and the treemap dims what is excluded.
+
+- **For:** removes a whole UI instead of adding one, and turns two disconnected panels into one
+  instrument. This is the same idea as item 6 and would subsume it.
+- **Against:** discoverability — a treemap does not look clickable without an affordance. Needs
+  a hint on first use, which the opening tutorial (item 2) can carry.
+- **Effort:** medium-large. Touches the ECharts instance, the globe's colour ramp and the
+  selection state at once.
+
+### Recommendation
+
+**A first, B second.** A is lower risk, fixes the complaint directly, and is testable on its
+own. B is the better product but is a redesign of the page's core interaction — worth doing
+once A has proven what people actually filter by.
+
+Both need the URL to carry the selection (`?g=black,death&c=PE`), which is also what makes a
+filtered view shareable — the same property just added to the hub's project grid.
+
 ## 1. Finish the module split — L, and harder than it looked
 
 **Correction to the earlier assessment.** I previously wrote that the obstacle was 231
