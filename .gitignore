@@ -47,3 +47,6 @@ playwright-report/
 Thumbs.db
 *.log
 .env
+
+# --- Respaldo de data pesada para Drive (NO sube a git) ---
+metal-globe-data.zip
