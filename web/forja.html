@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La Forja del Metal — Atlas genealógico</title>
 
-<!-- Leaflet (CDN) — lienzo de pan/zoom; Capa 3 (arte) y Capa 4 (timeline) se montarán encima -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet, vendored (2026-09-23): unpkg was breaking "L is not defined" in production —
+     the main vhost's CSP is script-src 'self', which blocks it outright. Same pattern as
+     vendor/echarts.min.js etc. Hashes verified against the CDN copy before vendoring. -->
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<script src="vendor/leaflet/leaflet.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
