@@ -87,6 +87,13 @@ en vez de pisar trabajo ajeno. Necesita que el objeto esperado exista localmente
 - **Los objetos viejos siguen alcanzables por SHA en GitHub** un tiempo después del force
   push. Para que desaparezcan de verdad hay que pedirle a GitHub Support que corra `gc`, o
   recrear el repo. El force push solo los saca de las vistas normales.
+
+  **Para este repo se decidió NO escalar a Support: desproporcionado.** El nombre de una
+  persona, ya fuera de todas las vistas normales, no justifica el trámite. El criterio para
+  escalar es otro: **datos de terceros bajo licencia**. Si al reescribir un historial lo que
+  se purga es contenido licenciado y no una cadena de prosa, entonces sí corresponde el pedido
+  a Support, y va con **ese** repo, no con este. Cuál es está anotado fuera de este archivo, a
+  propósito: nombrarlo acá lo publicaría.
 - **Cualquier clon existente conserva el historial viejo** y lo reintroduce si alguien
   pushea desde ahí. Hay que re-clonar (o `fetch` + `reset --hard`) en cada máquina.
 - **Este archivo no puede citar los ejemplos reales.** Nombrar las cadenas que colisionaban
